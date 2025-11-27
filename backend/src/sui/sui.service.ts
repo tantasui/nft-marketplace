@@ -1,47 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import { SuiEvent } from '@mysten/sui.js/client';
+import { SuiClient, getFullnodeUrl, SuiEvent } from '@mysten/sui/client';
 
 @Injectable()
 export class SuiService {
   private readonly logger = new Logger(SuiService.name);
   private client: SuiClient;
-  private keypair: Ed25519Keypair;
 
-  // Replace these with your deployed contract details
+  // Contract details from environment
   private packageId: string = process.env.PACKAGE_ID || 'YOUR_PACKAGE_ID';
   private registryId: string = process.env.REGISTRY_ID || 'YOUR_REGISTRY_ID';
 
   constructor() {
     // Initialize Sui client for testnet
     this.client = new SuiClient({ url: getFullnodeUrl('testnet') });
-
-    // Initialize keypair from environment or create a new one
-    // In production, use a secure key management system
-    if (process.env.PRIVATE_KEY) {
-      const privateKeyArray = Uint8Array.from(
-        Buffer.from(process.env.PRIVATE_KEY, 'hex')
-      );
-      this.keypair = Ed25519Keypair.fromSecretKey(privateKeyArray);
-    } else {
-      this.keypair = new Ed25519Keypair();
-      this.logger.warn(
-        'No private key found, generated new keypair for testing'
-      );
-      this.logger.warn(
-        `Address: ${this.keypair.getPublicKey().toSuiAddress()}`
-      );
-    }
+    this.logger.log('Sui service initialized for testnet - read-only mode');
   }
 
   getClient(): SuiClient {
     return this.client;
-  }
-
-  getAddress(): string {
-    return this.keypair.getPublicKey().toSuiAddress();
   }
 
   getPackageId(): string {
@@ -58,110 +34,6 @@ export class SuiService {
 
   setRegistryId(registryId: string) {
     this.registryId = registryId;
-  }
-
-  /**
-   * Mint a new NFT
-   */
-  async mintNFT(
-    name: string,
-    description: string,
-    url: string
-  ): Promise<any> {
-    try {
-      const tx = new TransactionBlock();
-
-      tx.moveCall({
-        target: `${this.packageId}::marketplace::mint_nft`,
-        arguments: [
-          tx.object(this.registryId),
-          tx.pure.string(name),
-          tx.pure.string(description),
-          tx.pure.string(url),
-        ],
-      });
-
-      const result = await this.client.signAndExecuteTransactionBlock({
-        signer: this.keypair,
-        transactionBlock: tx,
-        options: {
-          showEffects: true,
-          showEvents: true,
-          showObjectChanges: true,
-        },
-      });
-
-      this.logger.log(`NFT minted successfully: ${result.digest}`);
-      return result;
-    } catch (error) {
-      this.logger.error('Error minting NFT:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * List an NFT for sale
-   */
-  async listNFT(nftId: string, price: number): Promise<any> {
-    try {
-      const tx = new TransactionBlock();
-
-      tx.moveCall({
-        target: `${this.packageId}::marketplace::list_nft`,
-        arguments: [
-          tx.object(this.registryId),
-          tx.object(nftId),
-          tx.pure.u64(price),
-        ],
-      });
-
-      const result = await this.client.signAndExecuteTransactionBlock({
-        signer: this.keypair,
-        transactionBlock: tx,
-        options: {
-          showEffects: true,
-          showEvents: true,
-        },
-      });
-
-      this.logger.log(`NFT listed successfully: ${result.digest}`);
-      return result;
-    } catch (error) {
-      this.logger.error('Error listing NFT:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Buy a listed NFT
-   */
-  async buyNFT(nftId: string, price: number, coinId: string): Promise<any> {
-    try {
-      const tx = new TransactionBlock();
-
-      // Split coin for exact payment
-      const [coin] = tx.splitCoins(tx.object(coinId), [tx.pure.u64(price)]);
-
-      tx.moveCall({
-        target: `${this.packageId}::marketplace::buy_nft`,
-        arguments: [tx.object(this.registryId), tx.object(nftId), coin],
-      });
-
-      const result = await this.client.signAndExecuteTransactionBlock({
-        signer: this.keypair,
-        transactionBlock: tx,
-        options: {
-          showEffects: true,
-          showEvents: true,
-        },
-      });
-
-      this.logger.log(`NFT purchased successfully: ${result.digest}`);
-      return result;
-    } catch (error) {
-      this.logger.error('Error buying NFT:', error);
-      throw error;
-    }
   }
 
   /**
@@ -242,19 +114,21 @@ export class SuiService {
   }
 
   /**
-   * Get user's SUI coins
+   * Get NFT object details
    */
-  async getUserCoins(address?: string): Promise<any[]> {
+  async getNFTDetails(nftId: string): Promise<any> {
     try {
-      const userAddress = address || this.getAddress();
-      const coins = await this.client.getCoins({
-        owner: userAddress,
-        coinType: '0x2::sui::SUI',
+      const nft = await this.client.getObject({
+        id: nftId,
+        options: {
+          showContent: true,
+          showOwner: true,
+        },
       });
 
-      return coins.data;
+      return nft;
     } catch (error) {
-      this.logger.error('Error fetching user coins:', error);
+      this.logger.error('Error fetching NFT details:', error);
       throw error;
     }
   }

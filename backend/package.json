@@ -21,7 +21,7 @@
     "@nestjs/common": "^10.3.0",
     "@nestjs/core": "^10.3.0",
     "@nestjs/platform-express": "^10.3.0",
-    "@mysten/sui.js": "^0.54.1",
+    "@mysten/sui": "^1.0.0",
     "reflect-metadata": "^0.1.14",
     "rxjs": "^7.8.1"
   },

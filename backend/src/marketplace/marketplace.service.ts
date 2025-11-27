@@ -130,95 +130,12 @@ export class MarketplaceService implements OnModuleInit {
   }
 
   /**
-   * Mint a new NFT
+   * Get contract configuration for frontend
    */
-  async mintNFT(
-    name: string,
-    description: string,
-    url: string
-  ): Promise<any> {
-    try {
-      const result = await this.suiService.mintNFT(name, description, url);
-
-      // Re-index events after minting
-      setTimeout(() => this.indexEvents(), 2000);
-
-      return {
-        success: true,
-        digest: result.digest,
-        effects: result.effects,
-        events: result.events,
-        objectChanges: result.objectChanges,
-      };
-    } catch (error) {
-      this.logger.error('Error in mintNFT:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Buy an NFT
-   */
-  async buyNFT(nftId: string): Promise<any> {
-    try {
-      // Get listing details
-      const listing = this.listings.get(nftId);
-      if (!listing) {
-        throw new Error('NFT not listed');
-      }
-
-      const price = parseInt(listing.price);
-
-      // Get user's coins
-      const coins = await this.suiService.getUserCoins();
-      if (coins.length === 0) {
-        throw new Error('No SUI coins available');
-      }
-
-      // Use the first coin with sufficient balance
-      const coin = coins.find(
-        (c: any) => parseInt(c.balance) >= price
-      );
-      if (!coin) {
-        throw new Error('Insufficient balance');
-      }
-
-      const result = await this.suiService.buyNFT(nftId, price, coin.coinObjectId);
-
-      // Re-index events after purchase
-      setTimeout(() => this.indexEvents(), 2000);
-
-      return {
-        success: true,
-        digest: result.digest,
-        effects: result.effects,
-        events: result.events,
-      };
-    } catch (error) {
-      this.logger.error('Error in buyNFT:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * List an NFT for sale
-   */
-  async listNFT(nftId: string, price: number): Promise<any> {
-    try {
-      const result = await this.suiService.listNFT(nftId, price);
-
-      // Re-index events after listing
-      setTimeout(() => this.indexEvents(), 2000);
-
-      return {
-        success: true,
-        digest: result.digest,
-        effects: result.effects,
-        events: result.events,
-      };
-    } catch (error) {
-      this.logger.error('Error in listNFT:', error);
-      throw error;
-    }
+  getContractConfig() {
+    return {
+      packageId: this.suiService.getPackageId(),
+      registryId: this.suiService.getRegistryId(),
+    };
   }
 }

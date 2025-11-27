@@ -1,8 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
   Param,
   HttpException,
   HttpStatus,
@@ -88,109 +86,24 @@ export class MarketplaceController {
   }
 
   /**
-   * POST /api/mint
-   * Mint a new NFT
-   * Body: { name: string, description: string, url: string }
+   * GET /api/config
+   * Get contract configuration for frontend
    */
-  @Post('mint')
-  async mintNFT(
-    @Body() body: { name: string; description: string; url: string }
-  ) {
+  @Get('config')
+  async getConfig() {
     try {
-      const { name, description, url } = body;
-
-      // Validate input
-      if (!name || !description || !url) {
-        throw new HttpException(
-          {
-            success: false,
-            error: 'Missing required fields',
-            message: 'name, description, and url are required',
-          },
-          HttpStatus.BAD_REQUEST
-        );
-      }
-
-      const result = await this.marketplaceService.mintNFT(
-        name,
-        description,
-        url
-      );
+      const config = this.marketplaceService.getContractConfig();
 
       return {
         success: true,
-        message: 'NFT minted successfully',
-        data: result,
+        data: config,
       };
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      this.logger.error('Error minting NFT:', error);
+      this.logger.error('Error fetching config:', error);
       throw new HttpException(
         {
           success: false,
-          error: 'Failed to mint NFT',
-          message: error.message,
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
-  }
-
-  /**
-   * POST /api/buy
-   * Buy a listed NFT
-   * Body: { nftId: string }
-   */
-  @Post('buy')
-  async buyNFT(@Body() body: { nftId: string }) {
-    try {
-      const { nftId } = body;
-
-      // Validate input
-      if (!nftId) {
-        throw new HttpException(
-          {
-            success: false,
-            error: 'Missing required field',
-            message: 'nftId is required',
-          },
-          HttpStatus.BAD_REQUEST
-        );
-      }
-
-      // Check if NFT is listed
-      const listing = this.marketplaceService.getListing(nftId);
-      if (!listing) {
-        throw new HttpException(
-          {
-            success: false,
-            error: 'NFT not listed',
-            message: 'This NFT is not currently listed for sale',
-          },
-          HttpStatus.NOT_FOUND
-        );
-      }
-
-      const result = await this.marketplaceService.buyNFT(nftId);
-
-      return {
-        success: true,
-        message: 'NFT purchased successfully',
-        data: result,
-      };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      this.logger.error('Error buying NFT:', error);
-      throw new HttpException(
-        {
-          success: false,
-          error: 'Failed to buy NFT',
+          error: 'Failed to fetch config',
           message: error.message,
         },
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -224,60 +137,4 @@ export class MarketplaceController {
     }
   }
 
-  /**
-   * POST /api/list
-   * List an NFT for sale
-   * Body: { nftId: string, price: number }
-   */
-  @Post('list')
-  async listNFT(@Body() body: { nftId: string; price: number }) {
-    try {
-      const { nftId, price } = body;
-
-      // Validate input
-      if (!nftId || !price) {
-        throw new HttpException(
-          {
-            success: false,
-            error: 'Missing required fields',
-            message: 'nftId and price are required',
-          },
-          HttpStatus.BAD_REQUEST
-        );
-      }
-
-      if (price <= 0) {
-        throw new HttpException(
-          {
-            success: false,
-            error: 'Invalid price',
-            message: 'Price must be greater than 0',
-          },
-          HttpStatus.BAD_REQUEST
-        );
-      }
-
-      const result = await this.marketplaceService.listNFT(nftId, price);
-
-      return {
-        success: true,
-        message: 'NFT listed successfully',
-        data: result,
-      };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      this.logger.error('Error listing NFT:', error);
-      throw new HttpException(
-        {
-          success: false,
-          error: 'Failed to list NFT',
-          message: error.message,
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
-  }
 }
