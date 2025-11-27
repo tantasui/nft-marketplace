@@ -1,0 +1,34 @@
+{
+  "name": "sui-nft-marketplace",
+  "version": "1.0.0",
+  "description": "Complete NFT marketplace on Sui blockchain with Move smart contracts and NestJS backend",
+  "scripts": {
+    "deploy": "./deploy.sh",
+    "test": "./test-api.sh",
+    "backend:install": "cd backend && npm install",
+    "backend:dev": "cd backend && npm run dev",
+    "backend:build": "cd backend && npm run build",
+    "backend:start": "cd backend && npm start",
+    "contract:build": "cd contract && sui move build",
+    "contract:test": "cd contract && sui move test",
+    "setup": "npm run backend:install && echo '✅ Backend dependencies installed. Run ./deploy.sh to deploy contract.'"
+  },
+  "keywords": [
+    "sui",
+    "nft",
+    "marketplace",
+    "blockchain",
+    "move",
+    "nestjs",
+    "web3"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/sui-nft-marketplace.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
